@@ -24,7 +24,7 @@ public class CassandraDriverInsert implements Serializable {
         if (session == null) {
             CassandraConnector.connect(9042);
             session = CassandraConnector.getSession();
-            System.out.println("Created session " + session.getState());
+            System.out.println(" Created session " + session.getState());
         }
     }
 
