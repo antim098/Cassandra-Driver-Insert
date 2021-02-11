@@ -20,11 +20,11 @@ public class CassandraDriverInsert implements Serializable {
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
     public static Session session = null;
 
-    public static void CassandraDriverInsert() {
+    public static void createConnection() {
         if (session == null) {
             CassandraConnector.connect(9042);
             session = CassandraConnector.getSession();
-            System.out.println(" Created session " + session.getState());
+            //System.out.println(" Created session " + session.getState());
         }
     }
 
@@ -36,12 +36,12 @@ public class CassandraDriverInsert implements Serializable {
      */
     public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues, Boolean isIngestion) {
         try {
-            CassandraDriverInsert();
-            System.out.println("Column names "+ columnNames.toString());
-            System.out.println("Column Values "+columnValues.toString());
-            System.out.println("Generating prepared statement");
+            //CassandraDriverInsert();
+            //System.out.println("Column names "+ columnNames.toString());
+            //System.out.println("Column Values "+columnValues.toString());
+            //System.out.println("Generating prepared statement");
             PreparedStatement prepared = getPreparedStatement(session, keySpace, tableName, columnNames);
-            System.out.println("Prepared Statement Generated"+ prepared.getQueryString());
+            //System.out.println("Prepared Statement Generated"+ prepared.getQueryString());
             BoundStatement bound = prepared.bind();
             if (isIngestion) {
                 session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
@@ -115,12 +115,12 @@ public class CassandraDriverInsert implements Serializable {
      * @return
      */
     public static PreparedStatement getPreparedStatement(final Session session, final String keyspace, final String tableName, final List<String> columnNames) {
-        System.out.println("Inside prepared statement");
+        //System.out.println("Inside prepared statement");
         if (preparedStatementMap.get(tableName) == null) {
             preparedStatementMap.put(tableName, session.prepare(
                     prepareQueryString(keyspace, tableName, columnNames)));
         }
-        System.out.println("Outside prepared statement");
+        //System.out.println("Outside prepared statement");
         return preparedStatementMap.get(tableName);
     }
 
@@ -132,7 +132,7 @@ public class CassandraDriverInsert implements Serializable {
      */
     public static String prepareQueryString(final String keyspace, final String tableName, final List<String> columnNames) {
         if (insertQueryStatement.get(tableName) == null) {
-            System.out.println("Inside prepare Query String ");
+            //System.out.println("Inside prepare Query String ");
             StringBuilder queryStringBuilder = new StringBuilder("INSERT INTO " + keyspace + "." + tableName + " (");
             StringBuilder valueBuilder = new StringBuilder("(");
             for (int i = 0; i < columnNames.size(); i++) {
@@ -147,11 +147,11 @@ public class CassandraDriverInsert implements Serializable {
                 }
             }
             queryStringBuilder.append(" VALUES ").append(valueBuilder);
-            System.out.println("InsertQueryStatement " + queryStringBuilder.toString());
-            LOGGER.info("InsertQueryStatement " + queryStringBuilder.toString());
+            //System.out.println("InsertQueryStatement " + queryStringBuilder.toString());
+            //LOGGER.info("InsertQueryStatement " + queryStringBuilder.toString());
             insertQueryStatement.put(tableName, queryStringBuilder.toString());
         }
-        System.out.println("insert statement inside map is  " + insertQueryStatement.get(tableName));
+        //System.out.println("insert statement inside map is  " + insertQueryStatement.get(tableName));
         return insertQueryStatement.get(tableName);
     }
 }
