@@ -36,8 +36,8 @@ public class CassandraDriverInsert implements Serializable {
         try {
             //System.out.println("Column names "+ columnNames.toString());
             //System.out.println("Column Values "+columnValues.toString());
-            PreparedStatement prepared = getPreparedStatement(session, keySpace, tableName, columnNames);
-            System.out.println("Prepared Statement "+ prepared.getQueryString());
+            PreparedStatement prepared = getPreparedStatement(keySpace, tableName, columnNames);
+            LOGGER.info("Prepared Statement Generated"+ prepared.getQueryString());
             BoundStatement bound = prepared.bind();
             if (isIngestion) {
                 session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
@@ -104,13 +104,13 @@ public class CassandraDriverInsert implements Serializable {
     }
 
     /**
-     * @param session
+     * @param
      * @param keyspace
      * @param tableName
      * @param columnNames
      * @return
      */
-    private PreparedStatement getPreparedStatement(final Session session, final String keyspace, final String tableName, final List<String> columnNames) {
+    private PreparedStatement getPreparedStatement(final String keyspace, final String tableName, final List<String> columnNames) {
         if (preparedStatementMap.get(tableName) == null) {
             preparedStatementMap.put(tableName, session.prepare(
                     prepareQueryString(keyspace, tableName, columnNames)));
@@ -126,9 +126,9 @@ public class CassandraDriverInsert implements Serializable {
      */
     private String prepareQueryString(final String keyspace, final String tableName, final List<String> columnNames) {
         if (insertQueryStatement.get(tableName) == null) {
-            System.out.println("Keyspace "+ keyspace);
-            System.out.println("table name "+ tableName);
-            System.out.println("columns "+ columnNames);
+            //System.out.println("Keyspace "+ keyspace);
+            //System.out.println("table name "+ tableName);
+            //System.out.println("columns "+ columnNames);
             StringBuilder queryStringBuilder = new StringBuilder("INSERT INTO " + keyspace + "." + tableName + " (");
             StringBuilder valueBuilder = new StringBuilder("(");
             for (int i = 0; i < columnNames.size(); i++) {
