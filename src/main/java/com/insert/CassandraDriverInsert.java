@@ -41,6 +41,7 @@ public class CassandraDriverInsert implements Serializable {
                 session = CassandraConnector.getSession();
                 //System.out.println(" Created session " + session.getState());
             }
+
             //CassandraDriverInsert();
             //System.out.println("Column names "+ columnNames.toString());
             //System.out.println("Column Values "+columnValues.toString());
