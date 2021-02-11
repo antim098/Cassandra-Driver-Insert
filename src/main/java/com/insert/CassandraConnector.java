@@ -32,7 +32,7 @@ public class CassandraConnector {
         options.setTcpNoDelay(true);
 
         cluster = Cluster.builder().addContactPoints("localhost")
-                .withPort(port).withCredentials("cassandra", "cassandra")
+                .withPort(port)//.withCredentials("cassandra", "cassandra")
                 .withProtocolVersion(ProtocolVersion.V4)
                 //.withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.QUORUM))
                 .withSocketOptions(options).build();
