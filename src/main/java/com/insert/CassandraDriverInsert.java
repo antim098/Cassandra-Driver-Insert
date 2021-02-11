@@ -3,6 +3,7 @@ package com.insert;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
+import com.insert.CassandraConnector;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
@@ -19,10 +20,11 @@ public class CassandraDriverInsert implements Serializable {
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
     public static Session session = null;
 
-    public CassandraDriverInsert() {
+    public static void CassandraDriverInsert() {
         if (session == null) {
             CassandraConnector.connect(9042);
             session = CassandraConnector.getSession();
+            System.out.println("Created session " + session.getState());
         }
     }
 
@@ -32,12 +34,14 @@ public class CassandraDriverInsert implements Serializable {
      * @param columnNames
      * @param columnValues
      */
-    public void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues, Boolean isIngestion) {
+    public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues, Boolean isIngestion) {
         try {
-            //System.out.println("Column names "+ columnNames.toString());
-            //System.out.println("Column Values "+columnValues.toString());
-            PreparedStatement prepared = getPreparedStatement(keySpace, tableName, columnNames);
-            LOGGER.info("Prepared Statement Generated"+ prepared.getQueryString());
+            CassandraDriverInsert();
+            System.out.println("Column names "+ columnNames.toString());
+            System.out.println("Column Values "+columnValues.toString());
+            System.out.println("Generating prepared statement");
+            PreparedStatement prepared = getPreparedStatement(session, keySpace, tableName, columnNames);
+            System.out.println("Prepared Statement Generated"+ prepared.getQueryString());
             BoundStatement bound = prepared.bind();
             if (isIngestion) {
                 session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
@@ -45,7 +49,7 @@ public class CassandraDriverInsert implements Serializable {
                 session.executeAsync(loadBoundStatement(columnNames, columnValues, bound));
             }
         } catch (Exception e) {
-            LOGGER.error("[" + this + "] Exception occurred while trying to execute cassandra insert: " +
+            LOGGER.error("[" + CassandraDriverInsert.class + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
             //CassandraConnector.closeSession(session);
@@ -58,7 +62,7 @@ public class CassandraDriverInsert implements Serializable {
      * @param boundStatement
      * @return
      */
-    private BoundStatement loadBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
+    public static BoundStatement loadBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
         ArrayList<String> names = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
         for (int i = 0; i < columnNames.size(); i++) {
@@ -81,7 +85,7 @@ public class CassandraDriverInsert implements Serializable {
      * @param boundStatement
      * @return
      */
-    private BoundStatement loadIngestionBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
+    public static BoundStatement loadIngestionBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
         ArrayList<String> names = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
         for (int i = 0; i < columnNames.size(); i++) {
@@ -104,17 +108,19 @@ public class CassandraDriverInsert implements Serializable {
     }
 
     /**
-     * @param
+     * @param session
      * @param keyspace
      * @param tableName
      * @param columnNames
      * @return
      */
-    private PreparedStatement getPreparedStatement(final String keyspace, final String tableName, final List<String> columnNames) {
+    public static PreparedStatement getPreparedStatement(final Session session, final String keyspace, final String tableName, final List<String> columnNames) {
+        System.out.println("Inside prepared statement");
         if (preparedStatementMap.get(tableName) == null) {
             preparedStatementMap.put(tableName, session.prepare(
                     prepareQueryString(keyspace, tableName, columnNames)));
         }
+        System.out.println("Outside prepared statement");
         return preparedStatementMap.get(tableName);
     }
 
@@ -124,11 +130,9 @@ public class CassandraDriverInsert implements Serializable {
      * @param columnNames
      * @return
      */
-    private String prepareQueryString(final String keyspace, final String tableName, final List<String> columnNames) {
+    public static String prepareQueryString(final String keyspace, final String tableName, final List<String> columnNames) {
         if (insertQueryStatement.get(tableName) == null) {
-            //System.out.println("Keyspace "+ keyspace);
-            //System.out.println("table name "+ tableName);
-            //System.out.println("columns "+ columnNames);
+            System.out.println("Inside prepare Query String ");
             StringBuilder queryStringBuilder = new StringBuilder("INSERT INTO " + keyspace + "." + tableName + " (");
             StringBuilder valueBuilder = new StringBuilder("(");
             for (int i = 0; i < columnNames.size(); i++) {
@@ -143,9 +147,11 @@ public class CassandraDriverInsert implements Serializable {
                 }
             }
             queryStringBuilder.append(" VALUES ").append(valueBuilder);
+            System.out.println("InsertQueryStatement " + queryStringBuilder.toString());
             LOGGER.info("InsertQueryStatement " + queryStringBuilder.toString());
             insertQueryStatement.put(tableName, queryStringBuilder.toString());
         }
+        System.out.println("insert statement inside map is  " + insertQueryStatement.get(tableName));
         return insertQueryStatement.get(tableName);
     }
 }
