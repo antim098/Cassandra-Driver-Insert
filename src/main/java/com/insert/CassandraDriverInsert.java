@@ -99,14 +99,13 @@ public class CassandraDriverInsert implements Serializable {
         ArrayList<Object> values = new ArrayList<>();
         for (int i = 0; i < columnNames.size(); i++) {
             try {
-
                 String name = columnNames.get(i);
                 Object value = columnValues.get(i);
                 if (value != null && value != "") {  // Skipping tombstones
-                    if (value instanceof Date) {
+                    if (name.equals("raw_ts") || name.equals("ts")) {
+                        boundStatement.setUUID(name, (UUID) value);
+                    } else if (value instanceof Date) {
                         boundStatement.setTimestamp(name, (Date) value);
-                    } else if (value instanceof Integer) {
-                        boundStatement.setInt(name, (Integer) value);
                     } else if (value instanceof UUID) {
                         boundStatement.setUUID(name, (UUID) value);
                     } else if (value instanceof Double) {
