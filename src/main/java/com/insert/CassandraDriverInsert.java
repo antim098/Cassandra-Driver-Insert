@@ -3,10 +3,10 @@ package com.insert;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
-import com.insert.CassandraConnector;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -55,6 +55,8 @@ public class CassandraDriverInsert implements Serializable {
                 session.executeAsync(loadBoundStatement(columnNames, columnValues, bound));
             }
         } catch (Exception e) {
+            LOGGER.error("Column List :- " + columnNames.toString());
+            LOGGER.error("Column Values :-" + columnValues.toString());
             LOGGER.error("[" + CassandraDriverInsert.class + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
@@ -92,21 +94,32 @@ public class CassandraDriverInsert implements Serializable {
      * @return
      */
     public static BoundStatement loadIngestionBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
+
         ArrayList<String> names = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
         for (int i = 0; i < columnNames.size(); i++) {
-            String name = columnNames.get(i);
-            Object value = columnValues.get(i);
-            if (value != null && value != "") {  // Skipping tombstones
-                if (value instanceof Date) {
-                    boundStatement.setTimestamp(name, (Date) value);
-                } else if (value instanceof Integer) {
-                    boundStatement.setInt(name, (Integer) value);
-                } else if (value instanceof UUID) {
-                    boundStatement.setUUID(name, (UUID) value);
-                } else {
-                    boundStatement.setString(name, value.toString());
+            try {
+                String name = columnNames.get(i);
+                Object value = columnValues.get(i);
+                if (value != null && value != "") {  // Skipping tombstones
+                    if (value instanceof Date) {
+                        boundStatement.setTimestamp(name, (Date) value);
+                    } else if (value instanceof Integer) {
+                        boundStatement.setInt(name, (Integer) value);
+                    } else if (value instanceof UUID) {
+                        boundStatement.setUUID(name, (UUID) value);
+                    } else if (value instanceof Double) {
+                        boundStatement.setDouble(name, (Double) value);
+                    } else if (value instanceof Long || value instanceof BigInteger) {
+                        boundStatement.setLong(name, (Long) value);
+                    } else {
+                        boundStatement.setString(name, value.toString());
+                    }
                 }
+            } catch (Exception ex) {
+                LOGGER.error("Exception occured in processing column :- " + columnNames.get(i));
+                LOGGER.error("Value of the column is :-" + columnValues.get(i));
+                throw ex;
             }
         }
         //System.out.println("Bound Statement "+ boundStatement.toString());
