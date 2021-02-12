@@ -99,6 +99,7 @@ public class CassandraDriverInsert implements Serializable {
         ArrayList<Object> values = new ArrayList<>();
         for (int i = 0; i < columnNames.size(); i++) {
             try {
+
                 String name = columnNames.get(i);
                 Object value = columnValues.get(i);
                 if (value != null && value != "") {  // Skipping tombstones
