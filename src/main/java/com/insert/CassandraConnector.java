@@ -31,8 +31,8 @@ public class CassandraConnector {
         options.setReadTimeoutMillis(900000000);
         options.setTcpNoDelay(true);
 
-        cluster = Cluster.builder().addContactPoints("localhost")
-                .withPort(port)//.withCredentials("cassandra", "cassandra")
+        cluster = Cluster.builder().addContactPoints("10.105.22.171","10.105.22.172","10.105.22.173")
+                .withPort(port).withCredentials("cassandra", "cassandra")
                 .withProtocolVersion(ProtocolVersion.V4)
                 //.withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.QUORUM))
                 .withSocketOptions(options).build();
