@@ -56,7 +56,7 @@ public class CassandraDriverInsert implements Serializable {
             }
         } catch (Exception e) {
             LOGGER.error("Column List :- " + columnNames.toString());
-            LOGGER.error("Column Values :-" + columnValues.toString());
+            LOGGER.error("Column Values :- " + columnValues.toString());
             LOGGER.error("[" + CassandraDriverInsert.class + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
@@ -103,7 +103,9 @@ public class CassandraDriverInsert implements Serializable {
                 Object value = columnValues.get(i);
                 if (value != null && value != "") {  // Skipping tombstones
                     if (name.equals("raw_ts") || name.equals("ts")) {
-                        boundStatement.setUUID(name, (UUID) value);
+                        boundStatement.setUUID(name, UUID.fromString(value.toString()));
+                    } else if (value instanceof Integer) {
+                        boundStatement.setInt(name, (Integer) value);
                     } else if (value instanceof Date) {
                         boundStatement.setTimestamp(name, (Date) value);
                     } else if (value instanceof UUID) {
@@ -116,10 +118,10 @@ public class CassandraDriverInsert implements Serializable {
                         boundStatement.setString(name, value.toString());
                     }
                 }
-            } catch (Exception ex) {
-                LOGGER.error("Exception occured in processing column :- " + columnNames.get(i));
-                LOGGER.error("Value of the column is :-" + columnValues.get(i));
-                throw ex;
+            } catch (Exception exception) {
+                LOGGER.error("Exception occured in processing column : " + columnNames.get(i));
+                LOGGER.error("Value of the column is : " + columnValues.get(i));
+                throw exception;
             }
         }
         //System.out.println("Bound Statement "+ boundStatement.toString());
