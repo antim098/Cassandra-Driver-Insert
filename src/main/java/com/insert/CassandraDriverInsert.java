@@ -22,15 +22,16 @@ public class CassandraDriverInsert implements Serializable {
     public static long timeMarker = 0;
     public static long processedRecords = 0;
     public static long failedRecords = 0;
-    public static Session session = null;
+    //public static Session session = null;
 
-    public static void createConnection() {
-        if (session == null) {
-            CassandraConnector.connect(9042);
-            session = CassandraConnector.getSession();
-            //System.out.println(" Created session " + session.getState());
-        }
-    }
+//    public static void createConnection() {
+//        if (session == null) {
+//            CassandraConnector.connect(9042);
+//            session = CassandraConnector.getSession();
+//            return session;
+//            //System.out.println(" Created session " + session.getState());
+//        }
+//    }
 
     public static long getProcessedRecordCount() {
         return processedRecords;
@@ -48,12 +49,13 @@ public class CassandraDriverInsert implements Serializable {
      */
     public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues) {
         try {
-            if (session == null) {
-                CassandraConnector.connect(9042);
-                session = CassandraConnector.getSession();
-                //System.out.println(" Created session " + session.getState());
-            }
-
+//            if (session == null) {
+//                CassandraConnector.connect(9042);
+//                session = CassandraConnector.getSession();
+//                //System.out.println(" Created session " + session.getState());
+//            }
+            Session session = null;
+            session = CassandraConnector.connect();
             //CassandraDriverInsert();
             //System.out.println("Column names "+ columnNames.toString());
             //System.out.println("Column Values "+columnValues.toString());

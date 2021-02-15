@@ -2,6 +2,12 @@ package com.insert;
 
 import com.datastax.driver.core.*;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+
 import static java.lang.System.out;
 
 /**
@@ -11,11 +17,11 @@ public class CassandraConnector {
     /**
      * Cassandra Cluster.
      */
-    static Cluster cluster;
+    private static Cluster cluster;
     /**
      * Cassandra Session.
      */
-    static Session session;
+    private static Session session;
 
     /**
      * Connect to Cassandra Cluster specified by provided node IP
@@ -23,7 +29,7 @@ public class CassandraConnector {
      *
      * @param port Port of cluster host.
      */
-    public static void connect(final int port) {
+    public static void connectCluster(final int port) {
 
         //configure socket options
         SocketOptions options = new SocketOptions();
@@ -42,8 +48,24 @@ public class CassandraConnector {
             out.printf("Datacenter: %s; Host: %s; Rack: %s\n",
                     host.getDatacenter(), host.getAddress(), host.getRack());
         }
-        session = cluster.connect();
+        //session = cluster.connect();
     }
+
+
+    public static Session connect() {
+        if (session == null || session.isClosed()) {
+            if (cluster == null || cluster.isClosed()) {
+                connectCluster(9042);
+            }
+            session = cluster.connect();
+        }
+
+        return session;
+
+    	/*initialize();
+        return cluster.connect();*/
+    }
+
 
     /**
      * Provide my Session.
