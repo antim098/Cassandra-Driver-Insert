@@ -72,8 +72,8 @@ public class CassandraDriverInsert implements Serializable {
             }
         } catch (Exception e) {
             failedRecords++;
-            LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Column List :- " + columnNames.toString());
-            LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Column Values :- " + columnValues.toString());
+            LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Column List : " + columnNames.toString());
+            LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Column Values : " + columnValues.toString());
             LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
