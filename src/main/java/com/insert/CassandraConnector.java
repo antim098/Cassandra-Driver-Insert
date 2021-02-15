@@ -37,8 +37,9 @@ public class CassandraConnector {
         options.setReadTimeoutMillis(900000000);
         options.setTcpNoDelay(true);
 
-        cluster = Cluster.builder().addContactPoints("10.105.22.171","10.105.22.172","10.105.22.173")
-                .withPort(port).withCredentials("cassandra", "cassandra")
+        cluster = Cluster.builder()//.addContactPoints("10.105.22.171","10.105.22.172","10.105.22.173")
+                .addContactPoints("localhost")
+                .withPort(port)//.withCredentials("cassandra", "cassandra")
                 .withProtocolVersion(ProtocolVersion.V4)
                 //.withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.QUORUM))
                 .withSocketOptions(options).build();
@@ -59,9 +60,10 @@ public class CassandraConnector {
 //            }
 //            session = cluster.connect();
 //        }
-        if (cluster == null || cluster.isClosed()) {
-            connectCluster(9042);
-        }
+//        if (cluster == null || cluster.isClosed()) {
+////            connectCluster(9042);
+////        }
+        connectCluster(9042);
         Session session = cluster.connect();
         return session;
 
