@@ -53,13 +53,16 @@ public class CassandraConnector {
 
 
     public static Session connect() {
-        if (session == null || session.isClosed()) {
-            if (cluster == null || cluster.isClosed()) {
-                connectCluster(9042);
-            }
-            session = cluster.connect();
+//        if (session == null || session.isClosed()) {
+//            if (cluster == null || cluster.isClosed()) {
+//                connectCluster(9042);
+//            }
+//            session = cluster.connect();
+//        }
+        if (cluster == null || cluster.isClosed()) {
+            connectCluster(9042);
         }
-
+        Session session = cluster.connect();
         return session;
 
     	/*initialize();

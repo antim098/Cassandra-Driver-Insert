@@ -55,7 +55,7 @@ public class CassandraDriverInsert implements Serializable {
             //System.out.println("Prepared Statement Generated"+ prepared.getQueryString());
             BoundStatement bound = prepared.bind();
             session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
-            processedRecords++;
+            ++processedRecords;
             if (processedRecords % 1000000 == 0) {
                 long previousTime = timeMarker;
                 timeMarker = new Timestamp(System.currentTimeMillis()).getTime();
@@ -64,17 +64,17 @@ public class CassandraDriverInsert implements Serializable {
                         ", Total Failed Records = " + failedRecords);
             }
         } catch (Exception e) {
-            failedRecords++;
+            ++failedRecords;
             LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Column List : " + columnNames.toString());
             LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Column Values : " + columnValues.toString());
             LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
-            if (processedRecords == recordCount) {
-                LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed all records : " + processedRecords);
-                CassandraConnector.closeSession(session);
-            }
-            //CassandraConnector.closeSession(session);
+//            if (processedRecords == recordCount) {
+//                LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed all records : " + processedRecords);
+//                CassandraConnector.closeSession(session);
+//            }
+            CassandraConnector.closeSession(session);
         }
     }
 
