@@ -22,16 +22,7 @@ public class CassandraDriverInsert implements Serializable {
     public static long timeMarker = 0;
     public static long processedRecords = 0;
     public static long failedRecords = 0;
-    //public static Session session = null;
 
-//    public static void createConnection() {
-//        if (session == null) {
-//            CassandraConnector.connect(9042);
-//            session = CassandraConnector.getSession();
-//            return session;
-//            //System.out.println(" Created session " + session.getState());
-//        }
-//    }
 
     public static long getProcessedRecordCount() {
         return processedRecords;
@@ -47,14 +38,14 @@ public class CassandraDriverInsert implements Serializable {
      * @param columnNames
      * @param columnValues
      */
-    public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues) {
+    public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues, long recordCount) {
+        Session session = null;
         try {
 //            if (session == null) {
 //                CassandraConnector.connect(9042);
 //                session = CassandraConnector.getSession();
 //                //System.out.println(" Created session " + session.getState());
 //            }
-            Session session = null;
             session = CassandraConnector.connect();
             //CassandraDriverInsert();
             //System.out.println("Column names "+ columnNames.toString());
@@ -79,6 +70,10 @@ public class CassandraDriverInsert implements Serializable {
             LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
+            if (processedRecords == recordCount) {
+                LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed all records : " + processedRecords);
+                CassandraConnector.closeSession(session);
+            }
             //CassandraConnector.closeSession(session);
         }
     }
@@ -194,4 +189,6 @@ public class CassandraDriverInsert implements Serializable {
         //System.out.println("insert statement inside map is  " + insertQueryStatement.get(tableName));
         return insertQueryStatement.get(tableName);
     }
+
+
 }

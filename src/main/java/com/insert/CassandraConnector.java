@@ -66,6 +66,13 @@ public class CassandraConnector {
         return cluster.connect();*/
     }
 
+    public static void closeSession(Session session) {
+        if (session != null) {
+            session.close();
+            //LOGGER.info("Closed session status=" + session.isClosed());
+        }
+    }
+
 
     /**
      * Provide my Session.
