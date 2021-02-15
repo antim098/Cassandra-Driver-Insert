@@ -38,15 +38,15 @@ public class CassandraDriverInsert implements Serializable {
      * @param columnNames
      * @param columnValues
      */
-    public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues, Session session) {
-        //Session session = null;
+    public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues) {
+        Session session = null;
         try {
 //            if (session == null) {
 //                CassandraConnector.connect(9042);
 //                session = CassandraConnector.getSession();
 //                //System.out.println(" Created session " + session.getState());
 //            }
-            //session = CassandraConnector.connect();
+            session = CassandraConnector.connect();
             //System.out.println("Got Session");
             //CassandraDriverInsert();
             //System.out.println("Column names "+ columnNames.toString());
@@ -71,10 +71,10 @@ public class CassandraDriverInsert implements Serializable {
             LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
-//            if (processedRecords == recordCount) {
-//                LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed all records : " + processedRecords);
-//                CassandraConnector.closeSession(session);
-//            }
+            if (processedRecords == 1000000) {
+                LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed all records : " + processedRecords);
+                CassandraConnector.closeSession(session);
+            }
             //CassandraConnector.closeSession(session);
         }
     }

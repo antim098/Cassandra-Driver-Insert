@@ -2,12 +2,6 @@ package com.insert;
 
 import com.datastax.driver.core.*;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
-
 import static java.lang.System.out;
 
 /**
@@ -54,18 +48,13 @@ public class CassandraConnector {
 
 
     public static Session connect() {
-//        if (session == null || session.isClosed()) {
-//            if (cluster == null || cluster.isClosed()) {
-//                connectCluster(9042);
-//            }
-//            session = cluster.connect();
-//        }
-        if (cluster == null || cluster.isClosed()) {
-            connectCluster(9042);
+        if (session == null || session.isClosed()) {
+            if (cluster == null || cluster.isClosed()) {
+                connectCluster(9042);
+            }
+            session = cluster.connect();
         }
-        Session session = cluster.connect();
         return session;
-
     	/*initialize();
         return cluster.connect();*/
     }
