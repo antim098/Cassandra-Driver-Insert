@@ -60,10 +60,9 @@ public class CassandraConnector {
 //            }
 //            session = cluster.connect();
 //        }
-//        if (cluster == null || cluster.isClosed()) {
-////            connectCluster(9042);
-////        }
-        connectCluster(9042);
+        if (cluster == null || cluster.isClosed()) {
+            connectCluster(9042);
+        }
         Session session = cluster.connect();
         return session;
 
