@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -18,6 +19,9 @@ public class CassandraDriverInsert implements Serializable {
     private final static Logger LOGGER = Logger.getLogger(CassandraDriverInsert.class.getName());
     public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
+    public static long timeMarker = 0;
+    public static long processedRecords = 0;
+    public static long failedRecords = 0;
     public static Session session = null;
 
     public static void createConnection() {
@@ -34,7 +38,7 @@ public class CassandraDriverInsert implements Serializable {
      * @param columnNames
      * @param columnValues
      */
-    public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues, Boolean isIngestion) {
+    public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues) {
         try {
             if (session == null) {
                 CassandraConnector.connect(9042);
@@ -49,15 +53,20 @@ public class CassandraDriverInsert implements Serializable {
             PreparedStatement prepared = getPreparedStatement(session, keySpace, tableName, columnNames);
             //System.out.println("Prepared Statement Generated"+ prepared.getQueryString());
             BoundStatement bound = prepared.bind();
-            if (isIngestion) {
-                session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
-            } else {
-                session.executeAsync(loadBoundStatement(columnNames, columnValues, bound));
+            session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            processedRecords++;
+            if (processedRecords % 1000000 == 0) {
+                long previousTime = timeMarker;
+                timeMarker = new Timestamp(System.currentTimeMillis()).getTime();
+                LOGGER.info("Inserted 1000000 records in " + ((timeMarker - previousTime) / 1000) + " seconds" +
+                        "Total Records inserted = " + processedRecords +
+                        ", Total Failed Records = " + failedRecords);
             }
         } catch (Exception e) {
-            LOGGER.error("Column List :- " + columnNames.toString());
-            LOGGER.error("Column Values :- " + columnValues.toString());
-            LOGGER.error("[" + CassandraDriverInsert.class + "] Exception occurred while trying to execute cassandra insert: " +
+            failedRecords++;
+            LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Column List :- " + columnNames.toString());
+            LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Column Values :- " + columnValues.toString());
+            LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
             //CassandraConnector.closeSession(session);
@@ -119,8 +128,8 @@ public class CassandraDriverInsert implements Serializable {
                     }
                 }
             } catch (Exception exception) {
-                LOGGER.error("Exception occured in processing column : " + columnNames.get(i));
-                LOGGER.error("Value of the column is : " + columnValues.get(i));
+                LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Exception occured in processing column : " + columnNames.get(i));
+                LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Value of the column is : " + columnValues.get(i));
                 throw exception;
             }
         }
