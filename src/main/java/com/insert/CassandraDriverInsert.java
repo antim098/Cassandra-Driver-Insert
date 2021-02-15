@@ -32,6 +32,14 @@ public class CassandraDriverInsert implements Serializable {
         }
     }
 
+    public static long getProcessedRecordCount() {
+        return processedRecords;
+    }
+
+    public static long getFailedRecordCount() {
+        return failedRecords;
+    }
+
     /**
      * @param keySpace
      * @param tableName
