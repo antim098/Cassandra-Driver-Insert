@@ -16,18 +16,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CassandraDriverInsert implements Serializable {
 
     private final static Logger LOGGER = Logger.getLogger(CassandraDriverInsert.class.getName());
-    public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
-    public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
+    private static final Cluster cluster;
+    private static final Session session;
     //public static List<BoundStatement> BoundStatementList = Collections.synchronizedList(new ArrayList<BoundStatement>());
-    public static List<BoundStatement> BoundStatementList = new CopyOnWriteArrayList<>();
+    private static List<BoundStatement> BoundStatementList = new CopyOnWriteArrayList<>();
     //public static Queue<BoundStatement> BoundStatementQueue = new ConcurrentLinkedQueue<BoundStatement>();
-    public static long timeMarker = 0;
-    public static long processedRecords = 0;
-    public static long failedRecords = 0;
-    public static final Cluster cluster;
-    public static final Session session;
-//    private static ThreadPoolExecutor threadPoolExecutor =
-//            new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+    private static long timeMarker = 0;
+    private static long processedRecords = 0;
+    private static long failedRecords = 0;
 
     static {
         SocketOptions options = new SocketOptions();
@@ -37,10 +33,15 @@ public class CassandraDriverInsert implements Serializable {
         cluster = Cluster.builder()//.addContactPoints("10.105.22.171","10.105.22.172","10.105.22.173")
                 .addContactPoints("localhost")
                 .withPort(9042).withSocketOptions(options).build();
-        LOGGER.info("Created Cluster Object"+ cluster.getClusterName());
+        LOGGER.info("Created Cluster Object" + cluster.getClusterName());
         session = cluster.connect();
-        LOGGER.info("Created Session Object "+ session.toString());
+        LOGGER.info("Created Session Object " + session.toString());
     }
+
+    private ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
+//    private static ThreadPoolExecutor threadPoolExecutor =
+//            new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+    private ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
 
     public static long getProcessedRecordCount() {
         return processedRecords;
@@ -50,13 +51,36 @@ public class CassandraDriverInsert implements Serializable {
         return failedRecords;
     }
 
+    public static synchronized void executeBatchAsync(Session session) {
+        if (BoundStatementList.size() >= 10000) {
+            //CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
+            //BoundStatementList.subList(0, 10000).clear();
+            for (int i = 0; i < 10000; i++) {
+                session.executeAsync(BoundStatementList.get(i));
+            }
+            BoundStatementList.subList(0, 10000).clear();
+            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
+        }
+    }
+
+//    public static synchronized void executeBatchAsync(Session session) {
+//        if (BoundStatementList.size() == 10000) {
+//            CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
+//            BoundStatementList.subList(0, 10000).clear();
+//            for (BoundStatement statement : executionList) {
+//                session.executeAsync(statement);
+//            }
+//            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
+//        }
+//    }
+
     /**
      * @param keySpace
      * @param tableName
      * @param columnNames
      * @param columnValues
      */
-    public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues) {
+    public void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues) {
         //Session session = null;
         try {
 //            if (session == null) {
@@ -111,36 +135,13 @@ public class CassandraDriverInsert implements Serializable {
         }
     }
 
-//    public static synchronized void executeBatchAsync(Session session) {
-//        if (BoundStatementList.size() == 10000) {
-//            CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
-//            BoundStatementList.subList(0, 10000).clear();
-//            for (BoundStatement statement : executionList) {
-//                session.executeAsync(statement);
-//            }
-//            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
-//        }
-//    }
-
-    public static synchronized void executeBatchAsync(Session session) {
-        if (BoundStatementList.size() >= 10000) {
-            //CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
-            //BoundStatementList.subList(0, 10000).clear();
-            for (int i = 0; i < 10000; i++) {
-                session.executeAsync(BoundStatementList.get(i));
-            }
-            BoundStatementList.subList(0, 10000).clear();
-            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
-        }
-    }
-
     /**
      * @param columnNames
      * @param columnValues
      * @param boundStatement
      * @return
      */
-    public static BoundStatement loadBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
+    public BoundStatement loadBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
         ArrayList<String> names = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
         for (int i = 0; i < columnNames.size(); i++) {
@@ -163,7 +164,7 @@ public class CassandraDriverInsert implements Serializable {
      * @param boundStatement
      * @return
      */
-    public static BoundStatement loadIngestionBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
+    public BoundStatement loadIngestionBoundStatement(List<String> columnNames, List<Object> columnValues, BoundStatement boundStatement) {
 
         ArrayList<String> names = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
@@ -205,9 +206,10 @@ public class CassandraDriverInsert implements Serializable {
      * @param columnNames
      * @return
      */
-    public static PreparedStatement getPreparedStatement(final Session session, final String keyspace, final String tableName, final List<String> columnNames) {
+    public PreparedStatement getPreparedStatement(final Session session, final String keyspace, final String tableName, final List<String> columnNames) {
         //System.out.println("Inside prepared statement");
         if (preparedStatementMap.get(tableName) == null) {
+            LOGGER.info("Creating New Prepared Statement " + "Session: " + session.toString() + "Cluster :" + session.getCluster().toString());
             preparedStatementMap.put(tableName, session.prepare(
                     prepareQueryString(keyspace, tableName, columnNames)));
         }
@@ -221,7 +223,7 @@ public class CassandraDriverInsert implements Serializable {
      * @param columnNames
      * @return
      */
-    public static String prepareQueryString(final String keyspace, final String tableName, final List<String> columnNames) {
+    public String prepareQueryString(final String keyspace, final String tableName, final List<String> columnNames) {
         if (insertQueryStatement.get(tableName) == null) {
             //System.out.println("Inside prepare Query String ");
             StringBuilder queryStringBuilder = new StringBuilder("INSERT INTO " + keyspace + "." + tableName + " (");
