@@ -12,8 +12,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.*;
 
 public class CassandraDriverInsert implements Serializable {
 
@@ -26,6 +25,8 @@ public class CassandraDriverInsert implements Serializable {
     public static long timeMarker = 0;
     public static long processedRecords = 0;
     public static long failedRecords = 0;
+//    private static ThreadPoolExecutor threadPoolExecutor =
+//            new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 
     static {
         LOGGER.info("Initializing Cassandra Insert");
@@ -72,9 +73,9 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
-            executeBatchAsync(session);
-            BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
-            //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            //executeBatchAsync(session);
+            //BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
             if (processedRecords % 1000000 == 0) {
                 long previousTime = timeMarker;

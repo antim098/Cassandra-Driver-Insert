@@ -38,7 +38,7 @@ public class CassandraConnector {
         cluster = Cluster.builder()//.addContactPoints("10.105.22.171","10.105.22.172","10.105.22.173")
                 .addContactPoints("localhost")
                 .withPort(port)//.withCredentials("cassandra", "cassandra")
-                .withProtocolVersion(ProtocolVersion.V4)
+                //.withProtocolVersion(ProtocolVersion.V4)
                 //.withPoolingOptions(poolingOptions)
                 //.withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.QUORUM))
                 .withSocketOptions(options).build();
