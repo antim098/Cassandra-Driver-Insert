@@ -24,8 +24,8 @@ public class CassandraDriverInsert implements Serializable {
     public static long timeMarker = 0;
     public static long processedRecords = 0;
     public static long failedRecords = 0;
-    public static Cluster cluster;
-    public static Session session;
+    public static final Cluster cluster;
+    public static final Session session;
 //    private static ThreadPoolExecutor threadPoolExecutor =
 //            new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 
