@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CassandraDriverInsert implements Serializable {
 
@@ -73,9 +74,11 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
-            //executeBatchAsync(session);
-            //BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
-            session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            if (BoundStatementList.size() == 10000) {
+                executeBatchAsync(session);
+            }
+            BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
             if (processedRecords % 1000000 == 0) {
                 long previousTime = timeMarker;
