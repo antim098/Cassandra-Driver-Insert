@@ -8,22 +8,20 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.*;
 
 public class CassandraDriverInsert implements Serializable {
 
     private final static Logger LOGGER = Logger.getLogger(CassandraDriverInsert.class.getName());
     private static final Cluster cluster;
     private static final Session session;
+    //public static List<BoundStatement> BoundStatementList = Collections.synchronizedList(new ArrayList<BoundStatement>());
+    private static final List<BoundStatement> BoundStatementList = new CopyOnWriteArrayList<>();
     public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
-    //    private static ThreadPoolExecutor threadPoolExecutor =
-//            new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
     public static Queue<BoundStatement> BoundStatementQueue = new ConcurrentLinkedQueue<BoundStatement>();
-    //public static List<BoundStatement> BoundStatementList = Collections.synchronizedList(new ArrayList<BoundStatement>());
-    private static List<BoundStatement> BoundStatementList = new CopyOnWriteArrayList<>();
+    private static ThreadPoolExecutor threadPoolExecutor =
+            new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     private static long timeMarker = 0;
     private static long processedRecords = 0;
     private static long failedRecords = 0;
@@ -67,8 +65,10 @@ public class CassandraDriverInsert implements Serializable {
         //long size = BoundStatementList.size();
         if (BoundStatementList.size() >= 10000) {
             batchEvaluationTime = Instant.now().toEpochMilli();
-            BoundStatementQueue.addAll(BoundStatementList.subList(0, 10000));
-            BoundStatementList.subList(0, 10000).clear();
+            synchronized (BoundStatementList) {
+                BoundStatementQueue.addAll(BoundStatementList.subList(0, 10000));
+                BoundStatementList.subList(0, 10000).clear();
+            }
             for (BoundStatement boundStatement : BoundStatementQueue) {
                 session.executeAsync(boundStatement);
             }
@@ -127,7 +127,7 @@ public class CassandraDriverInsert implements Serializable {
 //                }
 //            });
             if (((Instant.now().toEpochMilli() - batchEvaluationTime) / 1000) > 10) {
-                executeBatchAsync(session);
+                threadPoolExecutor.submit(() -> executeBatchAsync(session));
             }
             BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
             //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
