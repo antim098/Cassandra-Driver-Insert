@@ -117,7 +117,7 @@ public class CassandraDriverInsert implements Serializable {
         if (BoundStatementList.size() == 10000) {
             //CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
             //BoundStatementList.subList(0, 10000).clear();
-            for (int i = 0; i < 100000; i++) {
+            for (int i = 0; i < 10000; i++) {
                 session.executeAsync(BoundStatementList.get(i));
             }
             BoundStatementList.subList(0, 10000).clear();
