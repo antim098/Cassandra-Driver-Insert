@@ -17,6 +17,7 @@ public class CassandraDriverInsert implements Serializable {
     public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
     public static List<BoundStatement> BoundStatementList = Collections.synchronizedList(new ArrayList<BoundStatement>());
+    //public static Queue<BoundStatement> BoundStatementQueue = new ConcurrentLinkedQueue<BoundStatement>();
     public static long timeMarker = 0;
     public static long processedRecords = 0;
     public static long failedRecords = 0;
@@ -66,9 +67,7 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
-            if (BoundStatementList.size() == 10000) {
-                executeBatchAsync(session);
-            }
+            executeBatchAsync(session);
             BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
             //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
@@ -95,12 +94,16 @@ public class CassandraDriverInsert implements Serializable {
     }
 
     public static synchronized void executeBatchAsync(Session session) {
-        List<BoundStatement> executionList = BoundStatementList.subList(0, 10000);
-        BoundStatementList.subList(0, 10000).clear();
-        for (BoundStatement bound : executionList) {
-            session.executeAsync(bound);
+        if (BoundStatementList.size() == 10000) {
+            List<BoundStatement> executionList = BoundStatementList.subList(0, 10000);
+            BoundStatementList.subList(0, 10000).clear();
+            synchronized (executionList) {
+                for (BoundStatement bound : executionList) {
+                    session.executeAsync(bound);
+                }
+            }
+            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
         }
-        LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
     }
 
     /**
