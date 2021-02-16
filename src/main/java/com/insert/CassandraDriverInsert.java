@@ -10,13 +10,15 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CassandraDriverInsert implements Serializable {
 
     private final static Logger LOGGER = Logger.getLogger(CassandraDriverInsert.class.getName());
     public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
-    public static List<BoundStatement> BoundStatementList = Collections.synchronizedList(new ArrayList<BoundStatement>());
+    //public static List<BoundStatement> BoundStatementList = Collections.synchronizedList(new ArrayList<BoundStatement>());
+    public static List<BoundStatement> BoundStatementList = new CopyOnWriteArrayList<>();
     //public static Queue<BoundStatement> BoundStatementQueue = new ConcurrentLinkedQueue<BoundStatement>();
     public static long timeMarker = 0;
     public static long processedRecords = 0;
