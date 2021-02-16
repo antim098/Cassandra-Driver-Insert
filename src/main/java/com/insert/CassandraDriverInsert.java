@@ -98,13 +98,12 @@ public class CassandraDriverInsert implements Serializable {
         }
     }
 
-    public static synchronized void executeBatchAsync(Session session) {
+    public static void executeBatchAsync(Session session) {
         if (BoundStatementList.size() == 10000) {
-            CopyOnWriteArrayList executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
+            CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
             BoundStatementList.subList(0, 10000).clear();
-            Object[] statements = executionList.toArray();
-            for (Object statement : statements) {
-                session.executeAsync((BoundStatement) statement);
+            for (BoundStatement statement : executionList) {
+                session.executeAsync(statement);
             }
         }
         LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
