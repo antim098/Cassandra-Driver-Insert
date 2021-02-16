@@ -74,7 +74,7 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
-            if (BoundStatementList.size() == 10000) {
+            if (BoundStatementList.size() <= 10000) {
                 executeBatchAsync(session);
             }
             BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
@@ -114,7 +114,7 @@ public class CassandraDriverInsert implements Serializable {
 //    }
 
     public static synchronized void executeBatchAsync(Session session) {
-        if (BoundStatementList.size() == 10000) {
+        if (BoundStatementList.size() <= 10000) {
             //CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
             //BoundStatementList.subList(0, 10000).clear();
             for (int i = 0; i < 10000; i++) {
