@@ -1,11 +1,7 @@
 package com.insert;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Session;
+import com.datastax.driver.core.*;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
@@ -16,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import com.google.common.util.concurrent.*;
 
 public class CassandraDriverInsert implements Serializable {
 
@@ -61,17 +58,17 @@ public class CassandraDriverInsert implements Serializable {
             PreparedStatement prepared = getPreparedStatement(session, keySpace, tableName, columnNames);
             //System.out.println("Prepared Statement Generated"+ prepared.getQueryString());
             BoundStatement bound = prepared.bind();
-            Futures.addCallback(session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound)), new FutureCallback<ResultSet>() {
-                @Override
-                public void onSuccess(ResultSet result) {
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
-                }
-            });
-            //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
+//            Futures.addCallback(session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound)), new FutureCallback<ResultSet>() {
+//                @Override
+//                public void onSuccess(ResultSet result) {
+//                }
+//
+//                @Override
+//                public void onFailure(Throwable t) {
+//                    LOGGER.error(t.getMessage(), t);
+//                }
+//            });
+            session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
             if (processedRecords % 1000000 == 0) {
                 long previousTime = timeMarker;
