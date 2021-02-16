@@ -26,10 +26,10 @@ public class CassandraConnector {
     public static void connectCluster(final int port) {
 
         //configure socket options
-        PoolingOptions poolingOptions = new PoolingOptions();
-        poolingOptions
-                .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
-                .setMaxRequestsPerConnection(HostDistance.REMOTE, 2000);
+//        PoolingOptions poolingOptions = new PoolingOptions();
+//        poolingOptions
+//                .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
+//                .setMaxRequestsPerConnection(HostDistance.REMOTE, 2000);
         SocketOptions options = new SocketOptions();
         options.setConnectTimeoutMillis(900000000);
         options.setReadTimeoutMillis(900000000);
@@ -39,7 +39,7 @@ public class CassandraConnector {
                 .addContactPoints("localhost")
                 .withPort(port)//.withCredentials("cassandra", "cassandra")
                 .withProtocolVersion(ProtocolVersion.V4)
-                .withPoolingOptions(poolingOptions)
+                //.withPoolingOptions(poolingOptions)
                 //.withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.QUORUM))
                 .withSocketOptions(options).build();
         final Metadata metadata = cluster.getMetadata();

@@ -1,24 +1,22 @@
 package com.insert;
 
-import com.datastax.driver.core.*;
-import com.google.common.util.concurrent.FutureCallback;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Session;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import com.google.common.util.concurrent.*;
 
 public class CassandraDriverInsert implements Serializable {
 
     private final static Logger LOGGER = Logger.getLogger(CassandraDriverInsert.class.getName());
     public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
+    public static List<BoundStatement> BoundStatementList = Collections.synchronizedList(new ArrayList<BoundStatement>());
     public static long timeMarker = 0;
     public static long processedRecords = 0;
     public static long failedRecords = 0;
@@ -68,7 +66,11 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
-            session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            if (BoundStatementList.size() == 10000) {
+                executeBatchAsync(session);
+            }
+            BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
             if (processedRecords % 1000000 == 0) {
                 long previousTime = timeMarker;
@@ -84,12 +86,21 @@ public class CassandraDriverInsert implements Serializable {
             LOGGER.error("[" + CassandraDriverInsert.class.getName() + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage(), e);
         } finally {
-            if (processedRecords == 1000000) {
-                LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed all records : " + processedRecords);
-                CassandraConnector.closeSession(session);
-            }
+//            if (processedRecords == 1000000) {
+//                LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed all records : " + processedRecords);
+//                CassandraConnector.closeSession(session);
+//            }
             //CassandraConnector.closeSession(session);
         }
+    }
+
+    public static synchronized void executeBatchAsync(Session session) {
+        List<BoundStatement> executionList = BoundStatementList.subList(0, 10000);
+        BoundStatementList.subList(0, 10000).clear();
+        for (BoundStatement bound : executionList) {
+            session.executeAsync(bound);
+        }
+        LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
     }
 
     /**
