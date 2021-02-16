@@ -1,8 +1,6 @@
 package com.insert;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
+import com.datastax.driver.core.*;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
@@ -26,11 +24,22 @@ public class CassandraDriverInsert implements Serializable {
     public static long timeMarker = 0;
     public static long processedRecords = 0;
     public static long failedRecords = 0;
+    public static Cluster cluster;
+    public static Session session;
 //    private static ThreadPoolExecutor threadPoolExecutor =
 //            new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 
     static {
-        LOGGER.info("Initializing Cassandra Insert");
+        SocketOptions options = new SocketOptions();
+        options.setConnectTimeoutMillis(900000000);
+        options.setReadTimeoutMillis(900000000);
+        options.setTcpNoDelay(true);
+        cluster = Cluster.builder()//.addContactPoints("10.105.22.171","10.105.22.172","10.105.22.173")
+                .addContactPoints("localhost")
+                .withPort(9042).withSocketOptions(options).build();
+        LOGGER.info("Created Cluster Object"+ cluster.getClusterName());
+        session = cluster.connect();
+        LOGGER.info("Created Session Object "+ session.toString());
     }
 
     public static long getProcessedRecordCount() {
@@ -48,14 +57,14 @@ public class CassandraDriverInsert implements Serializable {
      * @param columnValues
      */
     public static void insert(String keySpace, String tableName, List<String> columnNames, List<Object> columnValues) {
-        Session session = null;
+        //Session session = null;
         try {
 //            if (session == null) {
 //                CassandraConnector.connect(9042);
 //                session = CassandraConnector.getSession();
 //                //System.out.println(" Created session " + session.getState());
 //            }
-            session = CassandraConnector.connect();
+            //session = CassandraConnector.connect();
             //System.out.println("Got Session");
             //CassandraDriverInsert();
             //System.out.println("Column names "+ columnNames.toString());
@@ -74,11 +83,11 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
-            if (BoundStatementList.size() >= 10000) {
-                executeBatchAsync(session);
-            }
-            BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
-            //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
+//            if (BoundStatementList.size() >= 10000) {
+//                executeBatchAsync(session);
+//            }
+            //BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
             if (processedRecords % 1000000 == 0) {
                 long previousTime = timeMarker;
