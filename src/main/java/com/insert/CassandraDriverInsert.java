@@ -38,10 +38,10 @@ public class CassandraDriverInsert implements Serializable {
         LOGGER.info("Created Session Object " + session.toString());
     }
 
-    private ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
 //    private static ThreadPoolExecutor threadPoolExecutor =
 //            new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
-    private ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
 
     public static long getProcessedRecordCount() {
         return processedRecords;
