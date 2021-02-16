@@ -8,7 +8,10 @@ import org.apache.log4j.Logger;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -98,8 +101,8 @@ public class CassandraDriverInsert implements Serializable {
     public static synchronized void executeBatchAsync(Session session) {
         if (BoundStatementList.size() == 10000) {
             List<BoundStatement> executionList = BoundStatementList.subList(0, 10000);
-            BoundStatementList.subList(0, 10000).clear();
-            synchronized (executionList) {
+            synchronized (BoundStatementList) {
+                BoundStatementList.subList(0, 10000).clear();
                 Object[] statements = executionList.toArray();
                 for (Object statement : statements) {
                     session.executeAsync((BoundStatement) statement);
