@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +29,7 @@ public class CassandraDriverInsert implements Serializable {
     private static long timeMarker = 0;
     private static long processedRecords = 0;
     private static long failedRecords = 0;
+    private static long batchEvaluationTime = Instant.now().toEpochMilli();
 
     static {
         SocketOptions options = new SocketOptions();
@@ -50,14 +52,29 @@ public class CassandraDriverInsert implements Serializable {
         return failedRecords;
     }
 
+//    public synchronized void executeBatchAsync(Session session) {
+//        if (BoundStatementList.size() == 10000) {
+//            //CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
+//            //BoundStatementList.subList(0, 10000).clear();
+//            for (int i = 0; i < 10000; i++) {
+//                session.executeAsync(BoundStatementList.get(i));
+//            }
+//            batchEvaluationTime = Instant.now().toEpochMilli();
+//            BoundStatementList.subList(0, 10000).clear();
+//            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
+//        }
+//    }
+
     public synchronized void executeBatchAsync(Session session) {
-        if (BoundStatementList.size() == 10000) {
+        long size = BoundStatementList.size();
+        if (size >= 10000) {
             //CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
             //BoundStatementList.subList(0, 10000).clear();
-            for (int i = 0; i < 10000; i++) {
+            for (int i = 0; i < size; i++) {
                 session.executeAsync(BoundStatementList.get(i));
             }
-            BoundStatementList.subList(0, 10000).clear();
+            batchEvaluationTime = Instant.now().toEpochMilli();
+            BoundStatementList.subList(0, (int) size).clear();
             LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
         }
     }
@@ -106,7 +123,7 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
-            if (BoundStatementList.size() == 10000) {
+            if (((Instant.now().toEpochMilli() - batchEvaluationTime) / 1000) > 10) {
                 executeBatchAsync(session);
             }
             BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
