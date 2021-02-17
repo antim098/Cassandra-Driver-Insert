@@ -118,7 +118,9 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
-            BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            synchronized (BoundStatementList) {
+                BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
+            }
 //            long timeElapsed = ((Instant.now().toEpochMilli() - batchEvaluationTime) / 1000);
 //            if (timeElapsed > 5) {
 //                LOGGER.info("Calling execute after :" + timeElapsed + " seconds");
