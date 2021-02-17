@@ -40,6 +40,19 @@ public class CassandraDriverInsert implements Serializable {
         LOGGER.info("Created Session Object " + session.toString());
     }
 
+    public CassandraDriverInsert() {
+        LOGGER.info("Started timer thread ");
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        executeBatchAsync(session);
+                    }
+                },
+                5000
+        );
+    }
+
     public static long getProcessedRecordCount() {
         return processedRecords;
     }
@@ -83,17 +96,17 @@ public class CassandraDriverInsert implements Serializable {
 //                }
 //            });
             BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
-            long timeElapsed = ((Instant.now().toEpochMilli() - batchEvaluationTime) / 1000);
-            if (timeElapsed > 5) {
-                LOGGER.info("Calling execute after :" + timeElapsed + " seconds");
-                batchEvaluationTime = Instant.now().toEpochMilli();
-                threadPoolExecutor.submit(new Runnable() {
-                    @Override
-                    public synchronized void run() {
-                        CassandraDriverInsert.this.executeBatchAsync(session);
-                    }
-                });
-            }
+//            long timeElapsed = ((Instant.now().toEpochMilli() - batchEvaluationTime) / 1000);
+//            if (timeElapsed > 5) {
+//                LOGGER.info("Calling execute after :" + timeElapsed + " seconds");
+//                batchEvaluationTime = Instant.now().toEpochMilli();
+//                threadPoolExecutor.submit(new Runnable() {
+//                    @Override
+//                    public synchronized void run() {
+//                        CassandraDriverInsert.this.executeBatchAsync(session);
+//                    }
+//                });
+//            }
             //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
             if (processedRecords % 1000000 == 0) {
