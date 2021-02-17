@@ -83,8 +83,16 @@ public class CassandraDriverInsert implements Serializable {
 //                }
 //            });
             BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
-            if (((Instant.now().toEpochMilli() - batchEvaluationTime) / 1000) > 10) {
-                threadPoolExecutor.submit(() -> executeBatchAsync(session));
+            long timeElapsed = ((Instant.now().toEpochMilli() - batchEvaluationTime) / 1000);
+            if (timeElapsed > 5) {
+                LOGGER.info("Calling execute after :" + timeElapsed + " seconds");
+                batchEvaluationTime = Instant.now().toEpochMilli();
+                threadPoolExecutor.submit(new Runnable() {
+                    @Override
+                    public synchronized void run() {
+                        CassandraDriverInsert.this.executeBatchAsync(session);
+                    }
+                });
             }
             //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
@@ -111,15 +119,15 @@ public class CassandraDriverInsert implements Serializable {
     }
 
 
-    public void executeBatchAsync(Session session) {
+    public synchronized void executeBatchAsync(Session session) {
         //long size = BoundStatementList.size();
-        System.out.println("Current List Size : " + BoundStatementList.size());
-        if (BoundStatementList.size() >= 10000) {
-            batchEvaluationTime = Instant.now().toEpochMilli();
-            BoundStatementQueue.addAll(BoundStatementList.subList(0, 10000));
-            System.out.println("Queue Size : " + BoundStatementQueue.size());
-            BoundStatementList.subList(0, 10000).clear();
-            System.out.println("List Size after clearing sublist: " + BoundStatementList.size());
+        if (BoundStatementList.size() >= 50000) {
+            LOGGER.info("Current List Size : " + BoundStatementList.size());
+            //batchEvaluationTime = Instant.now().toEpochMilli();
+            BoundStatementQueue.addAll(BoundStatementList.subList(0, 50000));
+            LOGGER.info("Queue Size : " + BoundStatementQueue.size());
+            BoundStatementList.subList(0, 50000).clear();
+            LOGGER.info("List Size after clearing sublist: " + BoundStatementList.size());
             for (BoundStatement boundStatement : BoundStatementQueue) {
                 session.executeAsync(boundStatement);
             }
