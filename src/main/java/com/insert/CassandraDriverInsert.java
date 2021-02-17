@@ -20,6 +20,7 @@ public class CassandraDriverInsert implements Serializable {
     public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
     public static Queue<BoundStatement> BoundStatementQueue = new ConcurrentLinkedQueue<BoundStatement>();
+   // ConcurrentLinkedDeque<BoundStatement> testQueue = new ConcurrentLinkedDeque<BoundStatement>();
     private static Timer timer;
     private static ThreadPoolExecutor threadPoolExecutor =
             new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
@@ -29,13 +30,17 @@ public class CassandraDriverInsert implements Serializable {
     private static long batchEvaluationTime = Instant.now().toEpochMilli();
 
     static {
+        PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions
+                .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
+                .setMaxRequestsPerConnection(HostDistance.REMOTE, 2000);
         SocketOptions options = new SocketOptions();
         options.setConnectTimeoutMillis(900000000);
         options.setReadTimeoutMillis(900000000);
         options.setTcpNoDelay(true);
         cluster = Cluster.builder()//.addContactPoints("10.105.22.171","10.105.22.172","10.105.22.173")
                 .addContactPoints("localhost")
-                .withPort(9042).withSocketOptions(options).build();
+                .withPort(9042).withPoolingOptions(poolingOptions).withSocketOptions(options).build();
         LOGGER.info("Created Cluster Object" + cluster.getClusterName());
         session = cluster.connect();
         LOGGER.info("Created Session Object " + session.toString());
