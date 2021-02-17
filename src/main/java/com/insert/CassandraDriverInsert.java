@@ -65,9 +65,11 @@ public class CassandraDriverInsert implements Serializable {
         if (BoundStatementList.size() >= 50000) {
             LOGGER.info("Current List Size : " + BoundStatementList.size());
             //batchEvaluationTime = Instant.now().toEpochMilli();
-            BoundStatementQueue.addAll(BoundStatementList.subList(0, 50000));
-            LOGGER.info("Queue Size : " + BoundStatementQueue.size());
-            BoundStatementList.subList(0, 50000).clear();
+            synchronized (BoundStatementList) {
+                BoundStatementQueue.addAll(BoundStatementList.subList(0, 50000));
+                LOGGER.info("Queue Size : " + BoundStatementQueue.size());
+                BoundStatementList.subList(0, 50000).clear();
+            }
             LOGGER.info("List Size after clearing sublist: " + BoundStatementList.size());
             for (BoundStatement boundStatement : BoundStatementQueue) {
                 session.executeAsync(boundStatement);
