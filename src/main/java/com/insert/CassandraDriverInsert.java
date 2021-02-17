@@ -48,48 +48,6 @@ public class CassandraDriverInsert implements Serializable {
         return failedRecords;
     }
 
-//    public synchronized void executeBatchAsync(Session session) {
-//        if (BoundStatementList.size() == 10000) {
-//            //CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
-//            //BoundStatementList.subList(0, 10000).clear();
-//            for (int i = 0; i < 10000; i++) {
-//                session.executeAsync(BoundStatementList.get(i));
-//            }
-//            batchEvaluationTime = Instant.now().toEpochMilli();
-//            BoundStatementList.subList(0, 10000).clear();
-//            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
-//        }
-//    }
-
-    public void executeBatchAsync(Session session) {
-        //long size = BoundStatementList.size();
-        if (BoundStatementList.size() >= 10000) {
-            batchEvaluationTime = Instant.now().toEpochMilli();
-            BoundStatementQueue.addAll(BoundStatementList.subList(0, 10000));
-            BoundStatementList.subList(0, 10000).clear();
-            for (BoundStatement boundStatement : BoundStatementQueue) {
-                session.executeAsync(boundStatement);
-            }
-            BoundStatementQueue.clear();
-//            for (int i = 0; i < size; i++) {
-//                session.executeAsync(BoundStatementList.get(i));
-//            }
-
-            //BoundStatementList.subList(0, (int) size).clear();
-            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
-        }
-    }
-
-//    public static synchronized void executeBatchAsync(Session session) {
-//        if (BoundStatementList.size() == 10000) {
-//            CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
-//            BoundStatementList.subList(0, 10000).clear();
-//            for (BoundStatement statement : executionList) {
-//                session.executeAsync(statement);
-//            }
-//            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
-//        }
-//    }
 
     /**
      * @param keySpace
@@ -151,6 +109,55 @@ public class CassandraDriverInsert implements Serializable {
             //CassandraConnector.closeSession(session);
         }
     }
+
+
+    public void executeBatchAsync(Session session) {
+        //long size = BoundStatementList.size();
+        System.out.println("Current List Size : " + BoundStatementList.size());
+        if (BoundStatementList.size() >= 10000) {
+            batchEvaluationTime = Instant.now().toEpochMilli();
+            BoundStatementQueue.addAll(BoundStatementList.subList(0, 10000));
+            System.out.println("Queue Size : " + BoundStatementQueue.size());
+            BoundStatementList.subList(0, 10000).clear();
+            System.out.println("List Size after clearing sublist: " + BoundStatementList.size());
+            for (BoundStatement boundStatement : BoundStatementQueue) {
+                session.executeAsync(boundStatement);
+            }
+            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Records sent to execute : " + BoundStatementQueue.size());
+            BoundStatementQueue.clear();
+//            for (int i = 0; i < size; i++) {
+//                session.executeAsync(BoundStatementList.get(i));
+//            }
+
+            //BoundStatementList.subList(0, (int) size).clear();
+            //LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
+        }
+    }
+
+    //    public synchronized void executeBatchAsync(Session session) {
+//        if (BoundStatementList.size() == 10000) {
+//            //CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
+//            //BoundStatementList.subList(0, 10000).clear();
+//            for (int i = 0; i < 10000; i++) {
+//                session.executeAsync(BoundStatementList.get(i));
+//            }
+//            batchEvaluationTime = Instant.now().toEpochMilli();
+//            BoundStatementList.subList(0, 10000).clear();
+//            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
+//        }
+//    }
+
+
+//    public static synchronized void executeBatchAsync(Session session) {
+//        if (BoundStatementList.size() == 10000) {
+//            CopyOnWriteArrayList<BoundStatement> executionList = new CopyOnWriteArrayList<>(BoundStatementList.subList(0, 10000));
+//            BoundStatementList.subList(0, 10000).clear();
+//            for (BoundStatement statement : executionList) {
+//                session.executeAsync(statement);
+//            }
+//            LOGGER.info("[" + CassandraDriverInsert.class.getName() + "] Processed 10,000 records");
+//        }
+//    }
 
     /**
      * @param columnNames
