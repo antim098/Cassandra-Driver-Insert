@@ -61,14 +61,12 @@ public class CassandraDriverInsert implements Serializable {
 //        }
 //    }
 
-    public synchronized void executeBatchAsync(Session session) {
+    public void executeBatchAsync(Session session) {
         //long size = BoundStatementList.size();
         if (BoundStatementList.size() >= 10000) {
             batchEvaluationTime = Instant.now().toEpochMilli();
-            synchronized (BoundStatementList) {
-                BoundStatementQueue.addAll(BoundStatementList.subList(0, 10000));
-                BoundStatementList.subList(0, 10000).clear();
-            }
+            BoundStatementQueue.addAll(BoundStatementList.subList(0, 10000));
+            BoundStatementList.subList(0, 10000).clear();
             for (BoundStatement boundStatement : BoundStatementQueue) {
                 session.executeAsync(boundStatement);
             }
@@ -126,10 +124,10 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
+            BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
             if (((Instant.now().toEpochMilli() - batchEvaluationTime) / 1000) > 10) {
                 threadPoolExecutor.submit(() -> executeBatchAsync(session));
             }
-            BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
             //session.executeAsync(loadIngestionBoundStatement(columnNames, columnValues, bound));
             ++processedRecords;
             if (processedRecords % 1000000 == 0) {
