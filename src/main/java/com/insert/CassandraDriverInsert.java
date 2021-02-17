@@ -19,21 +19,23 @@ public class CassandraDriverInsert implements Serializable {
     private static final List<BoundStatement> BoundStatementList = new CopyOnWriteArrayList<>();
     public static ConcurrentHashMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<String, String> insertQueryStatement = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, BoundStatement> statementMap = new ConcurrentHashMap<>();
     public static Queue<BoundStatement> BoundStatementQueue = new ConcurrentLinkedQueue<BoundStatement>();
-   // ConcurrentLinkedDeque<BoundStatement> testQueue = new ConcurrentLinkedDeque<BoundStatement>();
+    // ConcurrentLinkedDeque<BoundStatement> testQueue = new ConcurrentLinkedDeque<BoundStatement>();
     private static Timer timer;
     private static ThreadPoolExecutor threadPoolExecutor =
             new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
-    private static long timeMarker = 0;
+    private static long timeMarker = Instant.now().toEpochMilli();;
     private static long processedRecords = 0;
     private static long failedRecords = 0;
     private static long batchEvaluationTime = Instant.now().toEpochMilli();
+    private static long index = 0;
 
     static {
         PoolingOptions poolingOptions = new PoolingOptions();
         poolingOptions
-                .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
-                .setMaxRequestsPerConnection(HostDistance.REMOTE, 2000);
+                .setMaxRequestsPerConnection(HostDistance.LOCAL, 2000)
+                .setMaxRequestsPerConnection(HostDistance.REMOTE, 500);
         SocketOptions options = new SocketOptions();
         options.setConnectTimeoutMillis(900000000);
         options.setReadTimeoutMillis(900000000);
@@ -65,15 +67,26 @@ public class CassandraDriverInsert implements Serializable {
         return failedRecords;
     }
 
+//    public static synchronized void executeBatch(Session session) {
+//        if (statementMap.size() >= 30000) {
+//            index = index + 30000;
+//            Iterator entriesIterator = statementMap.keySet().iterator();
+//            int i =0;
+//            while (entriesIterator.hasNext()) {
+//                map.remove( entriesIterator.next().toString());
+//            }
+//        }
+//    }
+
     public static synchronized void executeBatchAsync(Session session) {
         //long size = BoundStatementList.size();
-        if (BoundStatementList.size() >= 50000) {
+        if (BoundStatementList.size() >= 30000) {
             LOGGER.info("Current List Size : " + BoundStatementList.size());
             //batchEvaluationTime = Instant.now().toEpochMilli();
             synchronized (BoundStatementList) {
-                BoundStatementQueue.addAll(BoundStatementList.subList(0, 50000));
+                BoundStatementQueue.addAll(BoundStatementList.subList(0, 30000));
                 LOGGER.info("Queue Size : " + BoundStatementQueue.size());
-                BoundStatementList.subList(0, 50000).clear();
+                BoundStatementList.subList(0, 30000).clear();
             }
             LOGGER.info("List Size after clearing sublist: " + BoundStatementList.size());
             for (BoundStatement boundStatement : BoundStatementQueue) {
@@ -106,10 +119,6 @@ public class CassandraDriverInsert implements Serializable {
 //            }
             //session = CassandraConnector.connect();
             //System.out.println("Got Session");
-            //CassandraDriverInsert();
-            //System.out.println("Column names "+ columnNames.toString());
-            //System.out.println("Column Values "+columnValues.toString());
-            //System.out.println("Generating prepared statement");
             PreparedStatement prepared = getPreparedStatement(session, keySpace, tableName, columnNames);
             //System.out.println("Prepared Statement Generated"+ prepared.getQueryString());
             BoundStatement bound = prepared.bind();
@@ -123,6 +132,7 @@ public class CassandraDriverInsert implements Serializable {
 //                    LOGGER.error(t.getMessage(), t);
 //                }
 //            });
+            // statementMap.put(String.valueOf(processedRecords), loadIngestionBoundStatement(columnNames, columnValues, bound));
             synchronized (BoundStatementList) {
                 BoundStatementList.add(loadIngestionBoundStatement(columnNames, columnValues, bound));
             }
