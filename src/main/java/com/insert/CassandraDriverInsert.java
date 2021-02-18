@@ -39,7 +39,7 @@ public class CassandraDriverInsert implements Serializable {
         SocketOptions options = new SocketOptions();
         options.setConnectTimeoutMillis(900000000);
         options.setReadTimeoutMillis(900000000);
-        options.setTcpNoDelay(true);
+        //options.setTcpNoDelay(true);
         cluster = Cluster.builder()//.addContactPoints("10.105.22.171","10.105.22.172","10.105.22.173")
                 .addContactPoints("localhost")
                 .withPort(9042).withPoolingOptions(poolingOptions).withSocketOptions(options).build();
