@@ -113,7 +113,6 @@ public class CassandraConnector {
             }
             session = cluster.connect();
         }
-
         return session;
     	
     	/*initialize();
