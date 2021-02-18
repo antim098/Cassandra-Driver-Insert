@@ -129,8 +129,8 @@ public class CassandraConnector {
         if (cluster == null || cluster.isClosed()) {
             initialize();
         }
-        Session session = cluster.connect();
-        return session;
+        //Session session = cluster.connect();
+        return cluster.connect();
 
     	/*initialize();
         return cluster.connect();*/
@@ -357,8 +357,8 @@ public class CassandraConnector {
     }
 
     public static void closeSession(Session session) {
-        if (session != null) {
-            session.close();
+        if (session != null && !session.isClosed()) {
+            session.closeAsync();
             LOGGER.info("Closed session status=" + session.isClosed());
         }
     }
