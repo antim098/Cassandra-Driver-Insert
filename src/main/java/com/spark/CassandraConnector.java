@@ -1,10 +1,7 @@
 package com.spark;
 
-import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.Cluster.Builder;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.KeyspaceMetadata;
-import com.datastax.driver.core.Session;
 import org.apache.log4j.Logger;
 
 import java.net.InetAddress;
@@ -119,18 +116,13 @@ public class CassandraConnector {
 //        return cluster.connect();*/
 //    }
     public static Session connect() {
-//        if (session == null || session.isClosed()) {
-//            if (cluster == null || cluster.isClosed()) {
-//                initialize();
-//            }
-//            session = cluster.connect();
-//        }
-
-        if (cluster == null || cluster.isClosed()) {
-            initialize();
+        if (session == null || session.isClosed()) {
+            if (cluster == null || cluster.isClosed()) {
+                initialize();
+            }
+            session = cluster.connect();
         }
-        //Session session = cluster.connect();
-        return cluster.connect();
+        return session;
 
     	/*initialize();
         return cluster.connect();*/
@@ -159,8 +151,12 @@ public class CassandraConnector {
             }
 
             //PoolingOptions poolingOptions = new PoolingOptions().setHeartbeatIntervalSeconds(heartBeatInterval).setIdleTimeoutSeconds(120);
+            PoolingOptions poolingOptions = new PoolingOptions();
+            poolingOptions
+                    .setConnectionsPerHost(HostDistance.LOCAL, 1, 10)
+                    .setConnectionsPerHost(HostDistance.REMOTE, 1, 4);
             //Builder b = Cluster.builder().addContactPoints(nodes).withCredentials(userName, password).withPoolingOptions(poolingOptions);
-            Builder b = Cluster.builder().addContactPoints(nodes).withCredentials(userName, password);
+            Builder b = Cluster.builder().addContactPoints(nodes).withCredentials(userName, password).withPoolingOptions(poolingOptions);
             if (port != null) {
                 b.withPort(port);
             }
