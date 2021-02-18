@@ -73,7 +73,7 @@ public class CassandraWriterService implements Runnable {
             System.err.println("[" + this + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage());
         } finally {
-            CassandraConnector.closeSession(session);
+            //CassandraConnector.closeSession(session);
         }
     }
 

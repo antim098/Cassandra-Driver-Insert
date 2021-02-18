@@ -153,7 +153,7 @@ public class CassandraConnector {
             //PoolingOptions poolingOptions = new PoolingOptions().setHeartbeatIntervalSeconds(heartBeatInterval).setIdleTimeoutSeconds(120);
             PoolingOptions poolingOptions = new PoolingOptions();
             poolingOptions
-                    .setConnectionsPerHost(HostDistance.LOCAL, 5, 10) //Default core=max=1 in Protocol v3
+                    .setConnectionsPerHost(HostDistance.LOCAL, 5, 12) //Default core=max=1 in Protocol v3
                     .setConnectionsPerHost(HostDistance.REMOTE, 1, 4)
                     .setMaxRequestsPerConnection(HostDistance.LOCAL, 10240) //Default 1024 in Protocol v3
                     .setMaxRequestsPerConnection(HostDistance.REMOTE, 2560); //Default 256 in Protocol v3
