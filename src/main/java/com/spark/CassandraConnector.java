@@ -155,8 +155,8 @@ public class CassandraConnector {
             poolingOptions
                     .setConnectionsPerHost(HostDistance.LOCAL, 5, 10) //Default core=max=1 in Protocol v3
                     .setConnectionsPerHost(HostDistance.REMOTE, 1, 4)
-                    .setMaxRequestsPerConnection(HostDistance.LOCAL, 5120) //Default 1024 in Protocol v3
-                    .setMaxRequestsPerConnection(HostDistance.REMOTE, 1280); //Default 256 in Protocol v3
+                    .setMaxRequestsPerConnection(HostDistance.LOCAL, 8192) //Default 1024 in Protocol v3
+                    .setMaxRequestsPerConnection(HostDistance.REMOTE, 2048); //Default 256 in Protocol v3
             //Builder b = Cluster.builder().addContactPoints(nodes).withCredentials(userName, password).withPoolingOptions(poolingOptions);
             Builder b = Cluster.builder().addContactPoints(nodes).withCredentials(userName, password).withPoolingOptions(poolingOptions);
             if (port != null) {
