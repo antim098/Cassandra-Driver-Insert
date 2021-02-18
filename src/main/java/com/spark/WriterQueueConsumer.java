@@ -18,7 +18,7 @@ public class WriterQueueConsumer implements Runnable {
     }
 
     List<WriterInfo> list = new ArrayList<WriterInfo>();
-    ExecutorService cassandraWriterService = Executors.newFixedThreadPool(1);
+    ExecutorService cassandraWriterService = Executors.newFixedThreadPool(10);
 
     @Override
     public void run() {
