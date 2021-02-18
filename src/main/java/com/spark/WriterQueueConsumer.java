@@ -26,8 +26,8 @@ public class WriterQueueConsumer implements Runnable {
         try {
             while (true) {
                 list.add(WriterRepository.getQueue().take());
-                if (list.size() >= 1000) {
-                    LOGGER.info("Got 1000 records");
+                if (list.size() >= 10000) {
+                    LOGGER.info("Got 10000 records");
                     //thread launch
                     boolean flag = true;
                     List<String> columnNames = null;

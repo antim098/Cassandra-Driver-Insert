@@ -106,15 +106,32 @@ public class CassandraConnector {
      *
      * @return the session
      */
+//    public static Session connect() {
+//        if (session == null || session.isClosed()) {
+//            if (cluster == null || cluster.isClosed()) {
+//                initialize();
+//            }
+//            session = cluster.connect();
+//        }
+//        return session;
+//
+//    	/*initialize();
+//        return cluster.connect();*/
+//    }
     public static Session connect() {
-        if (session == null || session.isClosed()) {
-            if (cluster == null || cluster.isClosed()) {
-                initialize();
-            }
-            session = cluster.connect();
+//        if (session == null || session.isClosed()) {
+//            if (cluster == null || cluster.isClosed()) {
+//                initialize();
+//            }
+//            session = cluster.connect();
+//        }
+
+        if (cluster == null || cluster.isClosed()) {
+            initialize();
         }
+        Session session = cluster.connect();
         return session;
-    	
+
     	/*initialize();
         return cluster.connect();*/
     }
