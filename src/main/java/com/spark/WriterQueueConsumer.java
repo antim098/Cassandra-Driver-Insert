@@ -52,7 +52,7 @@ public class WriterQueueConsumer implements Runnable {
                 //Insert each record
                 //cassandraWriterService.submit(new CassandraWriterService(WriterRepository.getQueue().take()));
 
-                if (WriterRepository.getCountUpAndDownLatch().getCount() > 0 && WriterRepository.getCountUpAndDownLatch().getCount() % 100000 == 0) {
+                if (WriterRepository.getCountUpAndDownLatch().getCount() > 0 && WriterRepository.getCountUpAndDownLatch().getCount() % 100001 == 0) {
                     LOGGER.info("processed " + WriterRepository.getCountUpAndDownLatch().getCount());
                 }
 
