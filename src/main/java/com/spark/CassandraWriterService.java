@@ -1,5 +1,6 @@
 package com.spark;
 
+import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
@@ -47,12 +48,16 @@ public class CassandraWriterService implements Runnable {
         Session session = null;
         try {
             session = CassandraConnector.connect();
+            BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
             PreparedStatement prepared = getPreparedStatement(session, keySpace, tableName, columnNames);
             for (final List<Object> columnValue : columnValues) {
                 BoundStatement bound = prepared.bind();
-                session.executeAsync(loadBoundStatement(columnNames, columnValue, bound));
+                batch.add(loadBoundStatement(columnNames, columnValue, bound));
+                //session.executeAsync(loadBoundStatement(columnNames, columnValue, bound));
                 WriterRepository.getCountUpAndDownLatch().countUp();
             }
+            session.executeAsync(batch);
+
         } catch (Exception e) {
             LOGGER.info("[" + this + "] Exception occurred while trying to execute cassandra insert: " +
                     e.getMessage());
